@@ -1,5 +1,8 @@
-﻿using ReactAdminSample.Domain.Dto.Request;
-using ReactAdminSample.Domain.Dto.Response;
+﻿using Microsoft.EntityFrameworkCore;
+using ReactAdminSample.Domain.Dto;
+using ReactAdminSample.Domain.Dto.Filter;
+using ReactAdminSample.Domain.Dto.Request;
+using ReactAdminSample.Domain.Extensions;
 using ReactAdminSample.Domain.Models;
 using ReactAdminSample.Domain.Repositories;
 
@@ -7,7 +10,7 @@ namespace ReactAdminSample.Domain.Services.Impl
 {
     public abstract class AbstractEntityService<TEntity, TFilter, TRepository> : IEntityService<TEntity, TFilter>
         where TEntity : class, IEntity, new()
-        where TFilter : class
+        where TFilter : class, IEntityFilter
         where TRepository : IEntityRepository<TEntity>
     {
         public AbstractEntityService(TRepository repository)
@@ -17,81 +20,97 @@ namespace ReactAdminSample.Domain.Services.Impl
 
         protected TRepository Repository { get; }
 
-        public async Task<CreateResponseDto<TEntity>> CreateAsync(TEntity entity)
+        public async Task<TEntity> CreateAsync(TEntity entity)
         {
             await Repository.AddOneAsync(entity);
 
-            return new CreateResponseDto<TEntity>() {
-                Data = entity,
-            };
+            return entity;
         }
 
-        public async Task<DeleteResponseDto<TEntity>> DeleteAsync(Guid id)
+        public async Task<TEntity> DeleteAsync(Guid id)
         {
             var entity = await Repository.GetOneAsync(id);
             await Repository.DeleteOneAsync(entity);
 
-            return new DeleteResponseDto<TEntity>() {
-                Data = entity,
-            };
+            return entity;
         }
 
-        public async Task<DeleteManyResponseDto<Guid>> DeleteManyAsync(IList<Guid> ids)
+        public async Task<IList<Guid>> DeleteManyAsync(IList<Guid> ids)
         {
-            var entities = ids.Select(m => new TEntity() { Id = m }).ToList();
+            var entities = ids.Select(id => new TEntity() { Id = id }).ToList();
             await Repository.DeleteManyAsync(entities);
 
-            return new DeleteManyResponseDto<Guid>() {
-                Data = ids,
+            return ids;
+        }
+
+        public async Task<GetManyResult<TEntity>> GetManyAsync(GetManyRequestDto<TFilter> request)
+        {
+            var query = Repository.GetAllAsQueryable().AsNoTracking();
+
+            query = ApplyFiltering(query, request);
+
+            var total = await query.CountAsync();
+
+            query = ApplySorting(query, request);
+
+            var toSkip = 0;
+            if (request.PageSize > 0)
+            {
+                toSkip = (request.PageIndex - 1) * request.PageSize;
+                query = query.Skip(toSkip).Take(request.PageSize);
+            }
+
+            return new GetManyResult<TEntity>() {
+                Entities = await query.ToListAsync(),
+                RangeStart = toSkip,
+                RangeEnd = Math.Min(toSkip + request.PageSize, total),
+                Total = total,
             };
         }
 
-        public Task<GetListResponseDto<TEntity>> GetListAsync(GetListRequestDto<TFilter> request)
+        public async Task<TEntity?> GetOneAsync(Guid id)
         {
-            // TODO: To be implemented
-            throw new NotImplementedException();
+            return await Repository.GetOneAsync(id);
         }
 
-        public Task<GetManyResponseDto<TEntity>> GetManyAsync(IList<Guid> ids)
+        public async Task<TEntity> UpdateAsync(Guid id, TEntity entity)
         {
-            var entities = Repository.GetAllAsQueryable().Where(m => ids.Contains(m.Id)).ToList();
-            
-            return Task.FromResult(new GetManyResponseDto<TEntity>() {
-                Data = entities,
-            });
-        }
-
-        public Task<GetManyReferenceResponseDto<TEntity>> GetManyReferenceAsync(GetManyReferenceRequestDto<Guid, TFilter> request)
-        {
-            // TODO: To be implemented
-            throw new NotImplementedException();
-        }
-
-        public async Task<GetOneResponseDto<TEntity>> GetOneAsync(Guid id)
-        {
-            var entity = await Repository.GetOneAsync(id);
-            
-            return new GetOneResponseDto<TEntity>() {
-                Data = entity,
-            };
-        }
-
-        public async Task<UpdateResponseDto<TEntity>> UpdateAsync(TEntity entity)
-        {
+            entity.Id = id;
             await Repository.UpdateOneAsync(entity);
 
-            return new UpdateResponseDto<TEntity>() {
-                Data = entity,
-            };
+            return entity;
         }
 
-        public async Task<UpdateManyResponseDto<TEntity>> UpdateManyAsync(IList<TEntity> entities)
+        public async Task<IList<TEntity>> UpdateManyAsync(IList<Guid> ids, TEntity entity)
         {
+            var entities = ids.Select(id =>
+            { 
+                var copy = entity.DeepCopy();
+                copy.Id = id;
+                return copy;
+            })
+            .ToList();
+
             await Repository.UpdateManyAsync(entities);
 
-            return new UpdateManyResponseDto<TEntity>() {
-                Data = entities,
-            };
+            return entities;
+        }
+
+        private static IQueryable<TEntity> ApplyFiltering(IQueryable<TEntity> query, GetManyRequestDto<TFilter> request)
+        {
+            // TODO: Implement dynamic filtering?
+            return query;
+        }
+
+        private static IOrderedQueryable<TEntity> ApplySorting(IQueryable<TEntity> source, GetManyRequestDto<TFilter> request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+
+            if (string.IsNullOrEmpty(request.Sort) || string.IsNullOrEmpty(request.Order)) return source.OrderBy("Id");
+
+            return request.Order.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                ? source.OrderByDescending(request.Sort)
+                : source.OrderBy(request.Sort);
         }
     }
 }
