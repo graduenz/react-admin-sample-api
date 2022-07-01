@@ -27,9 +27,13 @@ namespace ReactAdminSample.Domain.Services.Impl
             return entity;
         }
 
-        public async Task<TEntity> DeleteAsync(Guid id)
+        public async Task<TEntity?> DeleteAsync(Guid id)
         {
             var entity = await Repository.GetOneAsync(id);
+
+            if (entity == null)
+                return null;
+
             await Repository.DeleteOneAsync(entity);
 
             return entity;
@@ -73,8 +77,13 @@ namespace ReactAdminSample.Domain.Services.Impl
             return await Repository.GetOneAsync(id);
         }
 
-        public async Task<TEntity> UpdateAsync(Guid id, TEntity entity)
+        public async Task<TEntity?> UpdateAsync(Guid id, TEntity entity)
         {
+            var existing = await Repository.GetOneAsync(id);
+
+            if (existing == null)
+                return null;
+
             entity.Id = id;
             await Repository.UpdateOneAsync(entity);
 
@@ -83,7 +92,14 @@ namespace ReactAdminSample.Domain.Services.Impl
 
         public async Task<IList<TEntity>> UpdateManyAsync(IList<Guid> ids, TEntity entity)
         {
-            var entities = ids.Select(id =>
+            var existingIds = await Repository
+                .GetAllAsQueryable()
+                .AsNoTracking()
+                .Where(m => ids.Contains(m.Id))
+                .Select(m => m.Id)
+                .ToListAsync();
+
+            var entities = existingIds.Select(id =>
             { 
                 var copy = entity.DeepCopy();
                 copy.Id = id;

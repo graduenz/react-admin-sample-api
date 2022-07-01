@@ -52,16 +52,28 @@ namespace ReactAdminSample.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] TEntity entity) =>
-            Ok(await Service.UpdateAsync(id, entity));
+        public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] TEntity entity)
+        {
+            var updatedEntity = await Service.UpdateAsync(id, entity);
+
+            return updatedEntity == null
+                ? NotFound()
+                : Ok(updatedEntity);
+        }
 
         [HttpPut]
         public async Task<IActionResult> UpdateMany([FromQuery] IList<Guid> ids, [FromBody] TEntity entity) =>
             Ok(await Service.UpdateManyAsync(ids, entity));
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete([FromRoute] Guid id) =>
-            Ok(await Service.DeleteAsync(id));
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
+        {
+            var deletedEntity = await Service.DeleteAsync(id);
+
+            return deletedEntity == null
+                ? NotFound()
+                : Ok(deletedEntity);
+        }
 
         [HttpDelete]
         public async Task<IActionResult> DeleteMany([FromQuery] IList<Guid> ids) =>
