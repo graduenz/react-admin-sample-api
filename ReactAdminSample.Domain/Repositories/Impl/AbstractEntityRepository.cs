@@ -21,18 +21,19 @@ namespace ReactAdminSample.Domain.Repositories.Impl
         public async Task AddOneAsync(TEntity entity)
         {
             await DbSet.AddAsync(entity);
+            await DbContext.SaveChangesAsync();
         }
 
-        public Task DeleteManyAsync(IList<TEntity> entities)
+        public async Task DeleteManyAsync(IList<TEntity> entities)
         {
             DbSet.RemoveRange(entities);
-            return Task.CompletedTask;
+            await DbContext.SaveChangesAsync();
         }
 
-        public Task DeleteOneAsync(TEntity entity)
+        public async Task DeleteOneAsync(TEntity entity)
         {
             DbSet.Remove(entity);
-            return Task.CompletedTask;
+            await DbContext.SaveChangesAsync();
         }
 
         public IQueryable<TEntity> GetAllAsQueryable()
@@ -45,16 +46,16 @@ namespace ReactAdminSample.Domain.Repositories.Impl
             return await DbSet.FindAsync(id);
         }
 
-        public Task UpdateManyAsync(IList<TEntity> entities)
+        public async Task UpdateManyAsync(IList<TEntity> entities)
         {
             DbSet.UpdateRange(entities);
-            return Task.CompletedTask;
+            await DbContext.SaveChangesAsync();
         }
 
-        public Task UpdateOneAsync(TEntity entity)
+        public async Task UpdateOneAsync(TEntity entity)
         {
             DbSet.Update(entity);
-            return Task.CompletedTask;
+            await DbContext.SaveChangesAsync();
         }
     }
 }
