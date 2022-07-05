@@ -112,13 +112,21 @@ namespace ReactAdminSample.Domain.Services.Impl
             return entities;
         }
 
-        private static IQueryable<TEntity> ApplyFiltering(IQueryable<TEntity> query, GetManyRequestDto<TFilter> request)
+        protected abstract IQueryable<TEntity> ApplySpecificFiltering(IQueryable<TEntity> query, GetManyRequestDto<TFilter> request);
+
+        protected virtual IQueryable<TEntity> ApplyFiltering(IQueryable<TEntity> query, GetManyRequestDto<TFilter> request)
         {
-            // TODO: Implement dynamic filtering?
-            return query;
+            if (request.Filter == null)
+                return query;
+
+            if (request.Filter.Ids?.Count > 0) {
+                query = query.Where(m => request.Filter.Ids.Contains(m.Id));
+            }
+
+            return ApplySpecificFiltering(query, request);
         }
 
-        private static IOrderedQueryable<TEntity> ApplySorting(IQueryable<TEntity> source, GetManyRequestDto<TFilter> request)
+        protected virtual IOrderedQueryable<TEntity> ApplySorting(IQueryable<TEntity> source, GetManyRequestDto<TFilter> request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
 
