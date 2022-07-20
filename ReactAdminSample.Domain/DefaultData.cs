@@ -7,44 +7,44 @@ namespace ReactAdminSample.Domain
     {
         public static (IList<Make>, IList<Model>, IList<Trim>) GetData()
         {
-            var trimFaker = new Faker<Trim>()
-                .RuleFor(m => m.Name, m => $"{m.Random.Number(1, 4)}.{m.Random.Even(0, 8)}L {m.Random.ArrayElement(new int[] { 8, 12, 16, 20 })}V {m.Vehicle.Fuel()}")
-                .RuleFor(m => m.Year, m => m.Random.Number(2000, 2023));
+            var makes = new List<Make>();
+            var models = new List<Model>();
+            var trims = new List<Trim>();
 
-            var modelFaker = new Faker<Model>()
-                .RuleFor(m => m.Name, m => m.Vehicle.Model())
-                .RuleFor(m => m.Trims, trimFaker.GenerateBetween(10, 40));
-
-            var makeFaker = new Faker<Make>()
-                .RuleFor(m => m.Name, m => m.Vehicle.Manufacturer())
-                .RuleFor(m => m.Models, modelFaker.GenerateBetween(6, 18));
-
-            var makes = makeFaker.GenerateBetween(12, 16);
-
-            foreach (var make in makes)
+            var makesCount = new Faker().Random.Number(12, 16);
+            for (int m = 0; m < makesCount; ++m)
             {
-                make.Id = Guid.NewGuid();
+                var makeFaker = new Faker<Make>()
+                    .RuleFor(m => m.Id, m => Guid.NewGuid())
+                    .RuleFor(m => m.Name, m => m.Vehicle.Manufacturer());
 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                foreach (var model in make.Models)
+                var make = makeFaker.Generate();
+                makes.Add(make);
+
+                var modelsCount = new Faker().Random.Number(6, 18);
+                for (int j = 0; j < modelsCount; ++j)
                 {
-                    model.Id = Guid.NewGuid();
-                    model.MakeId = make.Id;
+                    var modelFaker = new Faker<Model>()
+                        .RuleFor(m => m.MakeId, m => make.Id)
+                        .RuleFor(m => m.Id, m => Guid.NewGuid())
+                        .RuleFor(m => m.Name, m => m.Vehicle.Model());
 
-                    foreach (var trim in model.Trims)
+                    var model = modelFaker.Generate();
+                    models.Add(model);
+
+                    var trimsCount = new Faker().Random.Number(10, 40);
+                    for (int t = 0; t < trimsCount; ++t)
                     {
-                        trim.Id = Guid.NewGuid();
-                        trim.ModelId = model.Id;
+                        var trimFaker = new Faker<Trim>()
+                            .RuleFor(m => m.ModelId, m => model.Id)
+                            .RuleFor(m => m.Name, m => $"{m.Random.Number(1, 4)}.{m.Random.Even(0, 8)}L {m.Random.ArrayElement(new int[] { 8, 12, 16, 20 })}V {m.Vehicle.Fuel()}")
+                            .RuleFor(m => m.Year, m => m.Random.Number(2000, 2023));
+
+                        var trim = trimFaker.Generate();
+                        trims.Add(trim);
                     }
                 }
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
             }
-
-            var models = makes.SelectMany(m => m.Models).ToList();
-            var trims = models.SelectMany(m => m.Trims).ToList();
-
-            makes.ForEach(m => m.Models = null);
-            models.ForEach(m => m.Trims = null);
 
             return (makes, models, trims);
         }
