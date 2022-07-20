@@ -34,12 +34,10 @@ namespace ReactAdminSample.API.Controllers
         {
             var result = await Service.GetManyAsync(request);
 
-            if (result.RangeEnd > 0)
-            {
-                Response.Headers.ContentRange = new ContentRangeHeaderValue(result.RangeStart, result.RangeEnd, result.Total) {
-                    Unit = typeof(TEntity).Name,
-                }.ToString();
-            }
+            Response.Headers[HeaderNames.AccessControlExposeHeaders] = HeaderNames.ContentRange;
+            Response.Headers.ContentRange = new ContentRangeHeaderValue(result.RangeStart, result.RangeEnd, result.Total) {
+                Unit = typeof(TEntity).Name,
+            }.ToString();
 
             return Ok(result.Entities);
         }
