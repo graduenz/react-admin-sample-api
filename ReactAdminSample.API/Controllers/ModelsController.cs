@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ReactAdminSample.Domain.Dto.Filter;
 using ReactAdminSample.Domain.Models;
 using ReactAdminSample.Domain.Services;
@@ -7,9 +7,9 @@ namespace ReactAdminSample.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class MakeController : AbstractEntityController<Make, MakeFilterDto, IMakeService>
+    public class ModelsController : AbstractEntityController<Model, ModelFilterDto, IModelService>
     {
-        public MakeController(IMakeService service) : base(service)
+        public ModelsController(IModelService service) : base(service)
         {
         }
     }
