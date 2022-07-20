@@ -17,13 +17,15 @@ namespace ReactAdminSample.Domain
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Make>()
-                .HasMany(x => x.Models)
-                .WithOne(x => x.Make).HasForeignKey(x => x.MakeId);
+            modelBuilder.Entity<Trim>()
+                .HasOne(m => m.Model)
+                .WithMany(m => m.Trims)
+                .HasForeignKey(m => m.ModelId);
 
             modelBuilder.Entity<Model>()
-                .HasMany(x => x.Trims)
-                .WithOne(x => x.Model).HasForeignKey(x => x.ModelId);
+                .HasOne(m => m.Make)
+                .WithMany(m => m.Models)
+                .HasForeignKey(m => m.MakeId);
 
             base.OnModelCreating(modelBuilder);
         }
