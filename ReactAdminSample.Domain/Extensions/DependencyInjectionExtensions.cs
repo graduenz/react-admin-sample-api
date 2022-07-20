@@ -13,9 +13,13 @@ namespace ReactAdminSample.Domain.Extensions
             .AddServices();
 
         private static IServiceCollection AddRepositories(this IServiceCollection services) => services
-            .AddScoped<IMakeRepository, MakeRepository>();
+            .AddScoped<IMakeRepository, MakeRepository>()
+            .AddScoped<IModelRepository, ModelRepository>()
+            .AddScoped<ITrimRepository, TrimRepository>();
 
         private static IServiceCollection AddServices(this IServiceCollection services) => services
-            .AddScoped<IMakeService, MakeService>();
+            .AddScoped<IMakeService, MakeService>()
+            .AddScoped<IModelService, ModelService>()
+            .AddScoped<ITrimService, TrimService>();
     }
 }
