@@ -29,7 +29,7 @@ namespace ReactAdminSample.Domain.Services.Impl
 
         public async Task<TEntity?> DeleteAsync(Guid id)
         {
-            var entity = await Repository.GetOneAsync(id);
+            var entity = await Repository.GetOneDetachedAsync(id);
 
             if (entity == null)
                 return null;
@@ -49,7 +49,7 @@ namespace ReactAdminSample.Domain.Services.Impl
 
         public async Task<GetManyResult<TEntity>> GetManyAsync(GetManyRequestDto<TFilter> request)
         {
-            var query = Repository.GetAllAsQueryable().AsNoTracking();
+            var query = Repository.GetAllAsQueryable();
 
             query = ApplyFiltering(query, request);
 
@@ -74,12 +74,12 @@ namespace ReactAdminSample.Domain.Services.Impl
 
         public async Task<TEntity?> GetOneAsync(Guid id)
         {
-            return await Repository.GetOneAsync(id);
+            return await Repository.GetOneDetachedAsync(id);
         }
 
         public async Task<TEntity?> UpdateAsync(Guid id, TEntity entity)
         {
-            var existing = await Repository.GetOneAsync(id);
+            var existing = await Repository.GetOneDetachedAsync(id);
 
             if (existing == null)
                 return null;
