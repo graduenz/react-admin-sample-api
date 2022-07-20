@@ -38,12 +38,18 @@ namespace ReactAdminSample.Domain.Repositories.Impl
 
         public IQueryable<TEntity> GetAllAsQueryable()
         {
-            return DbSet;
+            return DbSet.AsNoTracking();
         }
 
-        public async Task<TEntity?> GetOneAsync(Guid id)
+        public async Task<TEntity?> GetOneDetachedAsync(Guid id)
         {
-            return await DbSet.FindAsync(id);
+            var entity = await DbSet.FindAsync(id);
+            
+            if (entity == null)
+                return null;
+
+            DbContext.Entry(entity).State = EntityState.Detached;
+            return entity;
         }
 
         public async Task UpdateManyAsync(IList<TEntity> entities)

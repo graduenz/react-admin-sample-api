@@ -3,7 +3,7 @@
     public interface IEntityRepository<TEntity> where TEntity : class
     {
         IQueryable<TEntity> GetAllAsQueryable();
-        Task<TEntity?> GetOneAsync(Guid id);
+        Task<TEntity?> GetOneDetachedAsync(Guid id);
         Task AddOneAsync(TEntity entity);
         Task AddManyAsync(IList<TEntity> entities);
         Task UpdateOneAsync(TEntity entity);
